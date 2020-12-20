@@ -1,7 +1,6 @@
 import datetime
 import io
 import operator
-import os
 import random
 import re
 
@@ -75,7 +74,7 @@ class Worksheets(commands.Cog):
     def create_worksheet(self, operation: Operation, date: str, q_num: int):
         stream = io.BytesIO()
 
-        for i in range(1, q_num+1):
+        for i in range(1, q_num + 1):
             x, y = self.gen_question(operation)
             encoded = (f"{x} {operation.symbol} {y} = \n").encode("UTF-8")
             stream.write(encoded)
