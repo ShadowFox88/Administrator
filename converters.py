@@ -36,4 +36,26 @@ class OperationConverter(commands.Converter):
 
         if operator_found:
             return operator_found
-        raise commands.BadArgument("WIP")
+        raise commands.BadArgument(f'unsupported operation: "{argument}"')
+
+
+class Difficulty(commands.Converter):
+    MIN = 0
+    MAX = 20
+
+    async def convert(self, ctx, argument) -> int:
+        try:
+            argument = int(argument)
+        except Exception:
+            raise commands.BadArgument(f'cannot convert "{argument}" to int')
+        else:
+            if argument < self.MIN:
+                comparative = "lower"
+                value = self.MIN
+            elif argument > self.MAX:
+                comparative = "higher"
+                value = self.MAX
+            else:
+                return argument
+            raise commands.BadArgument(f"{argument} is {comparative} than "
+                                       f"{value}")
