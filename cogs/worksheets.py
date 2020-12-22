@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.ext import flags
 from discord.ext import tasks
 
-import custom
+from base import custom
 from converters import OperationConverter
 from errors import WorksheetsError
 from objects import Operation
