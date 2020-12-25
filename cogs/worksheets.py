@@ -63,6 +63,7 @@ class Worksheets(custom.Cog):
         self.CST = CST()
 
         operation = OperationConverter.OPERATORS["mul"]
+        self.bot.loop.create_task(self.__ainit__())
         self._remind.start(operation)
 
     async def __ainit__(self):
