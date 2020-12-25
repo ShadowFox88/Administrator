@@ -8,7 +8,7 @@ class Administrator(custom.Bot):
     def __init__(self):
         super().__init__(
             command_prefix=commands.when_mentioned_or(">>>"),
-            intents=discord.Intents.default(),
+            intents=discord.Intents.all(),
             activity=discord.Activity(
                 type=discord.ActivityType.listening,
                 name=">>>help and pings"
