@@ -22,7 +22,7 @@ class Core(custom.Cog):
 
     @property
     def community(self):
-        return discord.utils.get(self.bot.home.roles, name="Community")
+        return self.bot.home.get_role(761425977401933845)
 
     @property
     def genshin_impact(self):
