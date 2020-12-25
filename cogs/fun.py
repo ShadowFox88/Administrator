@@ -5,7 +5,7 @@ import re
 from discord.ext import commands
 
 from base import custom
-from converters import DifficultyConverter
+from converters import Difficulty
 
 
 class Fun(custom.Cog):
@@ -67,7 +67,7 @@ class Fun(custom.Cog):
                 f"{flags}")
 
     @commands.command()
-    async def memory(self, ctx, difficulty: DifficultyConverter = 6):
+    async def memory(self, ctx, difficulty: Difficulty = 6):
         """
         WIP
         """
