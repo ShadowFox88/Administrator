@@ -28,7 +28,4 @@ class Administrator(custom.Bot):
 
 
 if __name__ == '__main__':
-    try:
-        Administrator().run()
-    except RuntimeError:
-        pass
+    Administrator().run()
