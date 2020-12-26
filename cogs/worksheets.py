@@ -1,8 +1,12 @@
 import datetime
 import io
 import operator
+import os
 import random
 import re
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import discord
 from discord.ext import commands
@@ -13,21 +17,7 @@ from base import custom
 from converters import OperationConverter
 from errors import WorksheetsError
 from objects import Operation
-
-date = re.compile(
-    r"^(?P<day>\d{1,2})-(?P<month>\d{1,2})-(?P<year>\d{4})$"
-)
-
-
-def date_format(arg: str):
-    date_found = date.fullmatch(arg)
-
-    if date_found:
-        day, month = (s.zfill(2) for s in date_found.group("day", "month"))
-        year = date_found.group("year")
-
-        return f"{day}-{month}-{year}"
-    raise commands.BadArgument("invalid date format passed")
+from objects import CST
 
 
 def positive_int(arg: str):
@@ -38,33 +28,21 @@ def positive_int(arg: str):
     raise commands.BadArgument("integer must be positive")
 
 
-class CST(datetime.tzinfo):
-    def utcoffset(self, dt):
-        return datetime.timedelta(hours=-6)
-
-    def dst(self, dt):
-        return datetime.timedelta(0)
-
-    def tzname(self, dt):
-        return "-06:00"
-
-
 class Worksheets(custom.Cog):
     def __init__(self, bot):
         self.bot = bot
 
         self.message: str = None
         self.question_format = re.compile(
-            r"(\d{1,2}\s*[\+-x÷]\s*\d{1,2}\s*=\s*\d{1,3}?\r?\n)"
-        )
-        self.time_format = re.compile(
-            r"^Time:\s*(?P<minutes>\d{1,2}):\s*(?P<seconds>\d{2})$"
+            r"(?P<x>\d{1,2})\s*"
+            r"(?P<operator>[\+-x÷])\s*"
+            r"(?P<y>\d{1,2})\s*=\s*"
+            r"(?P<answer>\d{1,3}?)"
+            r"(?P<has_carriage_return>\r)?"
         )
         self.CST = CST()
 
-        operation = OperationConverter.OPERATORS["mul"]
         self.bot.loop.create_task(self.__ainit__())
-        self._remind.start(operation)
 
     async def __ainit__(self):
         await self.bot.wait_until_ready()
@@ -78,7 +56,7 @@ class Worksheets(custom.Cog):
     def kai(self):
         return self.bot.home.get_member(297874688145752066)
 
-    def _get_next_target_date_from(self, now: datetime.datetime):
+    def _get_next_target_date(self):
         now = datetime.datetime.now(tz=self.CST)
         target = datetime.datetime(now.year,
                                    now.month,
@@ -90,113 +68,112 @@ class Worksheets(custom.Cog):
             return target
         return target + datetime.timedelta(days=1)
 
-    def gen_question(self, operation):
-        y = None
-        args = [1, 12]
-        x = random.randint(1, 12)
-        function = random.randint
+    def _bulk_write(self,
+                    message: str,
+                    streams: Tuple[io.BytesIO],
+                    **kwargs):
+        for i, stream in enumerate(streams):
+            print(stream, type(stream))
+            format_kwargs = {k: v[i] for k, v in kwargs.items()}
+            content = message.format(**format_kwargs).encode("UTF-8")
 
-        if operation == operator.sub:
-            args[1] = x
-        elif operation == operator.floordiv:
-            function = random.choice
-            x = random.randint(1, 10)
-            multiplier = random.randint(1, 10)
-            args = [x, multiplier]
-            x *= multiplier
+            stream.write(content)
 
-        if len(args) == 1:
-            y = args[0]
-        else:
-            try:
-                y = function(*args)
-            except TypeError:
-                y = function(args)
-        return x, y
+    def create_worksheet(self, operation: Operation):
+        now = datetime.datetime.now()
+        filename = now.strftime("%d-%m-%Y.txt")
+        streams = (io.BytesIO(), io.BytesIO())
 
-    def create_worksheet(self, operation: Operation, date: str, q_num: int):
+        for _ in range(flags["questions"]):
+            x = random.randint(1, 12)
+            y = random.randint(1, 12)
+            answer = operation(x, y)
+            message = f"{x} {operation.symbol} {y} = {{answer}}\n"
+
+            self._bulk_write(message, streams, answer=[answer, ""])
+        self._bulk_write("\nTime: \n", streams)
+
+        with open(f"internal/{filename}", "wb") as f:
+            stream = streams[0]
+            f.write(stream.read())
+        return discord.File(streams[1], filename)
+
+    def validate_worksheets(self,
+                            operation: Optional[Operation],
+                            attachments: List[discord.Attachment]):
         stream = io.BytesIO()
-
-        for i in range(1, q_num + 1):
-            x, y = self.gen_question(operation)
-            encoded = (f"{x} {operation.symbol} {y} = \n").encode("UTF-8")
-            stream.write(encoded)
-        stream.write(("\nTime: \n").encode("UTF-8"))
-        stream.seek(0)
-        return stream
-
-    def validate_worksheet(self, date: str):
-        time = None
+        success = 0
         total = 0
-        correct = 0
+        has_carriage_return: bool = None
+        attachment = attachments[0]
+        name, _ = os.path.splitext(attachment.filename)
+        filename = f"{name}-ANSWERS.txt"
+        content = await attachment.read()
 
-        with open(f"{date}.txt", "r") as q_file:
-            with open(f"{date}-ANSWERS.txt", "r") as a_file:
-                questions = q_file.readlines()
-                answers = a_file.readlines()
+        if content[:3] == b"\xef\xbb\xbf":
+            content = content[3:]
+        content = content.decode()
 
-                for question, answer in zip(questions, answers):
-                    # save processing power for expensive functions
-                    # e.g. regex
-                    if question.strip() == "":
-                        continue
-                    result = self.question_format.search(question)
+        for line in content.split("\n"):
+            question_found = self.question_format.match(line)
 
-                    if result is not None:
-                        total += 1
+            if question_found:
+                append = line.strip()
+                total += 1
 
-                        if result.group() == answer:
-                            correct += 1
-                    else:
-                        time_found = self.time_format.match(question)
+                if has_carriage_return is None:
+                    has_carriage_return = bool(
+                        question_found.group("has_carriage_return")
+                    )
 
-                        if time_found is not None:
-                            minutes, seconds = time_found.groups()
-                            time = f"{minutes}m {seconds}s"
-        return correct, total, time
+                if operation is None:
+                    operation = question_found.group("operator")
+                args = ("x", "y", "answer")
+                x, y, response = map(int, question_found.group(*args))
+                answer = operation(x, y)
+
+                if response == answer:
+                    success += 1
+                else:
+                    append += f" ❌ {answer}"
+
+                if has_carriage_return:
+                    append += "\r"
+                append += "\n"
+                stream.write(append)
+        append = f"Results: {success}/{total}"
+        line_ending = "\n"
+
+        if has_carriage_return:
+            line_ending = "\r\n"
+        stream.write(f"{line_ending}Results: {success}/{total}{line_ending}")
+        return discord.File(stream, filename)
 
     @tasks.loop()
     async def _remind(self, operation: Operation):
-        now = datetime.datetime.now(tz=self.CST)
-        target = self._get_next_target_date_from(now)
+        target = self._get_next_target_date()
+        await discord.utils.sleep_until(target)
 
-        if now < target:
-            await discord.utils.sleep_until(target)
-        date = datetime.datetime.now().strftime("%d-%m-%Y")
-        stream = self.create_worksheet(operation, date, 30)
-        file = discord.File(stream, filename=f"{date}.txt")
+        file = self.create_worksheet(operation)
         await self.bot_channel.send(self.message, file=file)
-
-    @_remind.before_loop
-    async def _before_remind(self):
-        await self.bot.wait_until_ready()
-        print("Running task:", f"{self.__class__.__name__}._remind")
 
     @flags.add_flag("--questions", type=positive_int, default=30)
     @flags.add_flag("--validate", action="store_true")
-    @flags.add_flag("--date",
-                    type=date_format,
-                    default=datetime.datetime.now().strftime("%d-%m-%Y"))
     @flags.command()
-    async def worksheets(self, ctx, operation: OperationConverter, **flags):
-        function = self.create_worksheet
-        args = (operation, flags["date"], flags["questions"])
+    async def worksheets(self,
+                         ctx,
+                         operation: Optional[OperationConverter],
+                         **flags):
+        content: Optional[str] = self.message
 
         if flags["validate"]:
-            function = self.validate_worksheet
-
-            if ctx.attachments:
-                pass
-            raise WorksheetsError("No file attached")
-        data = function(*args)
-
-        if isinstance(data, tuple):
-            correct, total, time = data
+            content = None
+            file = self.create_worksheet(operation)
         else:
-            filename = flags["date"] + ".txt"
-            file = discord.File(data, filename=filename)
-
-            await ctx.send(file=file)
+            if not ctx.message.attachments:
+                raise WorksheetsError("no attachment found")
+            file = self.validate_worksheets(operation, ctx.message.attachments)
+        await ctx.send(content, file=file)
 
 
 def setup(bot):
