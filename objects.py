@@ -11,9 +11,9 @@ class Operation(object):
         return self._function(*args, **kwargs)
 
 
-class CST(datetime.tzinfo):
+class MST(datetime.tzinfo):
     def utcoffset(self, dt):
-        return datetime.timedelta(hours=-6)
+        return datetime.timedelta(hours=-7)
 
     def dst(self, dt):
         return datetime.timedelta(0)
