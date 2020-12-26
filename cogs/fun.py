@@ -1,7 +1,10 @@
 import asyncio
 import random
 import re
+from typing import Optional
+from typing import Union
 
+import discord
 from discord.ext import commands
 
 from base import custom
@@ -36,6 +39,19 @@ class Fun(custom.Cog):
                 append = word
             response.append(append)
         return response
+
+    async def _get_webhook(self, channel: discord.TextChannel):
+        webhooks = await channel.webhooks()
+        webhook_found = discord.utils.get(
+            webhooks,
+            name="Administrator",
+            user=self.bot.user
+        )
+
+        if not webhook_found:
+            webhook_found = await channel.create_webhook(name="Administrator",
+                                                         reason="Webhook init")
+        return webhook_found
 
     def generate_answer(self, *, difficulty: int):
         answer = []
@@ -85,6 +101,36 @@ class Fun(custom.Cog):
         received = await self.bot.wait_for("message", check=check)
         message = self.verify_answer(received.content, answer)
         await ctx.send(message)
+
+    @commands.command()
+    async def say(self,
+                  ctx,
+                  member: Optional[discord.Member], *,
+                  message):
+        member = member if member else ctx.author
+        files = None
+        kwargs: dict = None
+        webhook = await self._get_webhook(ctx.channel)
+        coroutine = webhook.send
+
+        if ctx.message.attachments:
+            files = [await a.to_file() for a in ctx.attachments]
+
+        kwargs = {
+            "username": member.display_name,
+            "avatar_url": member.avatar_url,
+            "files": files,
+            "allowed_mentions": discord.AllowedMentions(
+                everyone=False,
+                roles=False
+            )
+        }
+
+        if member == self.bot.user:
+            coroutine = ctx.send
+            kwargs.pop("username", None)
+            kwargs.pop("avatar_url", None)
+        await coroutine(message, **kwargs)
 
 
 def setup(bot):
