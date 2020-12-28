@@ -2,7 +2,6 @@ import asyncio
 import random
 import re
 from typing import Optional
-from typing import Union
 
 import discord
 from discord.ext import commands
@@ -107,7 +106,7 @@ class Fun(custom.Cog):
                   ctx,
                   member: Optional[discord.Member], *,
                   message):
-        member = member if member else ctx.author
+        member = member if member else ctx.guild.me
         files = None
         kwargs: dict = None
         webhook = await self._get_webhook(ctx.channel)
