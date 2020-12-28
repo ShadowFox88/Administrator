@@ -19,6 +19,7 @@ class Administrator(custom.Bot):
         )
         self.home_id = 464446709146320897
 
+        exclude = ["base.cogs.error_handler"]  # noqa
         self.load_extensions("./cogs")
 
     @property
