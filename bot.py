@@ -17,6 +17,7 @@ class Administrator(custom.Bot):
                 roles=False
             )
         )
+        self._edit_cache = {}
         self.home_id = 464446709146320897
 
         exclude = ["base.cogs.error_handler"]  # noqa
