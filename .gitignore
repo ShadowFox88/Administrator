@@ -140,3 +140,4 @@ cython_debug/
 # Custom
 .flake8
 TOKEN
+test.py
