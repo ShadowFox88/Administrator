@@ -1,10 +1,13 @@
 from collections import OrderedDict
+from os import environ
 from typing import Dict
 
 import discord
 from discord.ext import commands
 
 from base import custom
+
+environ["JISHAKU_NO_UNDERSCORE"] = environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
 
 
 class Administrator(custom.Bot):
@@ -21,18 +24,14 @@ class Administrator(custom.Bot):
                 everyone=False,
                 roles=False
             ),
+            home=464446709146320897,
             max_messages=0
         )
         self._edit_cache_maximum = _edit_cache_maximum
         self._edit_cache: Dict[int, discord.Message] = OrderedDict()
-        self.home_id = 464446709146320897
 
         exclude = ["base.cogs.error_handler"]  # noqa: F841
         self.load_extensions("./cogs")
-
-    @property
-    def home(self):
-        return self.get_guild(self.home_id)
 
     def _get_edit_cached_message(self, message_id: int):
         message_found = self._edit_cache.get(message_id, None)

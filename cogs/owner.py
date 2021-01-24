@@ -3,28 +3,6 @@ from discord.ext import commands
 from base import custom
 
 
-# left here for easy hot-reloading
-# https://github.com/platform-discord/travis-bott/blob/master/utils/customcontext.py#L33-L79
-class Context(commands.Context):
-    async def send(self, *args, **kwargs):
-        is_owner = await self.bot.is_owner(self.author)
-        message = self.message
-
-        if is_owner:
-            cached = self.bot._get_edit_cached_message(self.message.id)
-
-            if cached:
-                if args:
-                    kwargs["content"] = args[0]
-                await cached.clear_reactions()
-                await cached.edit(**kwargs)
-                self.bot._edit_cache[self.message.id] = cached
-            else:
-                message = await super().send(*args, **kwargs)
-                self.bot._edit_cache[self.message.id] = message
-        return message
-
-
 class Owner(custom.Cog, hidden=True):
     def __init__(self, bot):
         self.bot = bot
@@ -42,7 +20,7 @@ class Owner(custom.Cog, hidden=True):
             return None
         return await channel_found.fetch_message(payload.message_id)
 
-    async def get_context(self, message, *, cls=Context):
+    async def get_context(self, message, *, cls=custom.Context):
         return await self._original_get_context(message, cls=cls)
 
     @commands.Cog.listener()
