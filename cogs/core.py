@@ -4,8 +4,7 @@ import discord
 from discord.ext import commands
 
 from base import custom
-from converters import Lowered
-from converters import TriggerConverter
+from converters import Lowered, TriggerConverter
 from enums import Trigger
 
 

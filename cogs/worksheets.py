@@ -1,23 +1,17 @@
 import datetime
 import io
-import operator
 import os
 import random
 import re
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import List, Optional
 
 import discord
-from discord.ext import commands
-from discord.ext import flags
-from discord.ext import tasks
+from discord.ext import commands, flags, tasks
 
 from base import custom
 from converters import OperationConverter
 from errors import WorksheetsError
-from objects import Operation
-from objects import MST
+from objects import Operation, MST
 
 
 def positive_int(arg: str):
