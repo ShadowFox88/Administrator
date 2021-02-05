@@ -1,5 +1,5 @@
+import os
 from collections import OrderedDict
-from os import environ
 from typing import Dict
 
 import discord
@@ -7,7 +7,8 @@ from discord.ext import commands
 
 from base import custom
 
-environ["JISHAKU_NO_UNDERSCORE"] = environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
+for flag in ("JISHAKU_NO_UNDERSCORE", "JISHAKU_NO_DM_TRACEBACK"):
+    os.environ[flag] = "True"
 
 
 class Administrator(custom.Bot):
