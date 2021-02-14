@@ -55,7 +55,8 @@ class Core(custom.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        await member.add_roles(self.community)
+        if member.guild == self.bot.home:
+            await member.add_roles(self.community)
 
     @commands.command()
     async def opt(self, ctx, trigger: TriggerConverter, *, feature: Lowered):
