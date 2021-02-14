@@ -1,20 +1,18 @@
 import os
-from collections import OrderedDict
-from typing import Dict
 
 import discord
 from discord.ext import commands
 
 from base import custom
 
-for flag in ("JISHAKU_NO_UNDERSCORE", "JISHAKU_NO_DM_TRACEBACK"):
-    os.environ[flag] = "True"
+FLAGS = ("NO_UNDERSCORE", "NO_DM_TRACEBACK", "HIDE")
+
+for flag in FLAGS:
+    os.environ[f"JISHAKU_{flag}"] = "True"
 
 
 class Administrator(custom.Bot):
     def __init__(self, *args, **kwargs):
-        _edit_cache_maximum = kwargs.pop("max_messages", 1000)
-
         super().__init__(
             command_prefix=commands.when_mentioned_or(">>>"),
             activity=discord.Activity(
@@ -26,21 +24,10 @@ class Administrator(custom.Bot):
                 roles=False
             ),
             home=464446709146320897,
-            max_messages=0
+            max_edit_messages=1000
         )
-        self._edit_cache_maximum = _edit_cache_maximum
-        self._edit_cache: Dict[int, discord.Message] = OrderedDict()
 
-        exclude = ["base.cogs.error_handler"]  # noqa: F841
-        self.load_extensions("./cogs")
-
-    def _get_edit_cached_message(self, message_id: int):
-        message_found = self._edit_cache.get(message_id, None)
-
-        if not message_found:
-            if len(self._edit_cache) == self._edit_cache_maximum:
-                self._edit_cache.popitem(last=False)
-        return message_found
+        self.load_base_extensions(exclude=["error_handler.py"])
 
 
 if __name__ == '__main__':
