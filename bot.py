@@ -1,14 +1,10 @@
-import os
-
 import discord
 from discord.ext import commands
 
+import init
 from base import custom
 
-FLAGS = ("NO_UNDERSCORE", "NO_DM_TRACEBACK", "HIDE")
-
-for flag in FLAGS:
-    os.environ[f"JISHAKU_{flag}"] = "True"
+init.run()
 
 
 class Administrator(custom.Bot):
@@ -24,10 +20,12 @@ class Administrator(custom.Bot):
                 roles=False
             ),
             home=464446709146320897,
-            max_edit_messages=1000
+            max_edit_messages=1000,
+            autocomplete=True
         )
 
         self.load_base_extensions(exclude=["error_handler.py"])
+        self.load_extension("cogs.error_handler")
 
 
 if __name__ == '__main__':
