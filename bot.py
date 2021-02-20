@@ -1,10 +1,7 @@
 import discord
 from discord.ext import commands
 
-import init
 from base import custom
-
-init.run()
 
 
 class Administrator(custom.Bot):
