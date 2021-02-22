@@ -22,7 +22,7 @@ class Administrator(custom.Bot):
         )
 
         self.load_base_extensions(exclude=["error_handler.py"])
-        self.load_extension("cogs.error_handler")
+        self.load_extensions("cogs")
 
 
 if __name__ == '__main__':
