@@ -1,3 +1,4 @@
 discord.py
 jishaku
 flake8
+discord-flags
