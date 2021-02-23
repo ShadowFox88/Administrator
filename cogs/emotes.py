@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import re
 from typing import Optional, Tuple, Union
 
@@ -104,8 +105,9 @@ class Emotes(custom.Cog):
                 author=medium
             )
 
-        for emote in self.bonk_emotes:
-            await medium.add_reaction(emote)
+        with contextlib.suppress(discord.Forbidden):
+            for emote in self.bonk_emotes:
+                await medium.add_reaction(emote)
         await ctx.send(f"{medium.author.mention} {joined}")
 
 
