@@ -83,12 +83,13 @@ class Emotes(custom.Cog):
                    ctx,
                    medium: Optional[Medium] = None):
         joined = ("").join(self.bonk_emotes)
+        kwargs = {"before": ctx.message, "oldest_fist": True}
 
         if not medium:
-            medium = ctx.channel.last_message
+            async for message in ctx.channel.history(**kwargs):
+                medium = message
+                break
         elif isinstance(medium, discord.Member):
-            kwargs = {"before": ctx.message, "oldest_fist": True}
-
             async for message in ctx.channel.history(**kwargs):
                 if message.author == medium:
                     medium = message
