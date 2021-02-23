@@ -42,6 +42,15 @@ class Emotes(custom.Cog):
             for emote in guild.emojis:
                 self.emotes.setdefault(emote.name, str(emote))
 
+    async def _get_recent_message(self,
+                                  channel: discord.TextChannel,
+                                  before: discord.Message,
+                                  *, author: Optional[discord.Member] = None):
+        async for message in channel.history(before=before):
+            if author and message.author != author:
+                continue
+            return message
+
     @commands.Cog.listener()
     async def on_message(self, message):
         ctx = await self.bot.get_context(message)
@@ -82,18 +91,18 @@ class Emotes(custom.Cog):
     async def bonk(self,
                    ctx,
                    medium: Optional[Medium] = None):
+        kwargs = {}
         joined = ("").join(self.bonk_emotes)
-        kwargs = {"before": ctx.message}
 
-        if not medium:
-            async for message in ctx.channel.history(**kwargs):
-                medium = message
-                break
-        elif isinstance(medium, discord.Member):
-            async for message in ctx.channel.history(**kwargs):
-                if message.author == medium:
-                    medium = message
-                    break
+        if isinstance(medium, discord.Member):
+            kwargs["author"] = medium
+
+        if not isinstance(medium, discord.Message):
+            medium = await self._get_recent_mesage(
+                ctx.channel,
+                ctx.message,
+                author=medium
+            )
 
         for emote in self.bonk_emotes:
             await medium.add_reaction(emote)
