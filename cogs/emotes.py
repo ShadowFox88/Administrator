@@ -98,7 +98,7 @@ class Emotes(custom.Cog):
             kwargs["author"] = medium
 
         if not isinstance(medium, discord.Message):
-            medium = await self._get_recent_mesage(
+            medium = await self._get_recent_message(
                 ctx.channel,
                 ctx.message,
                 author=medium
