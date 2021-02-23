@@ -1,11 +1,13 @@
 import asyncio
 import re
-from typing import Tuple
+from typing import Optional, Tuple, Union
 
 import discord
 from discord.ext import commands
 
 from base import custom
+
+Medium = Union[discord.Message, discord.Member]
 
 
 class Emotes(custom.Cog):
@@ -77,8 +79,20 @@ class Emotes(custom.Cog):
         await message.channel.send(generated)
 
     @commands.command()
-    async def bonk(self, ctx, message: discord.Message):
+    async def bonk(self,
+                   ctx,
+                   medium: Optional[Medium] = None):
         joined = ("").join(self.bonk_emotes)
+
+        if not medium:
+            medium = ctx.channel.last_message
+        elif isinstance(medium, discord.Member):
+            kwargs = {"before": ctx.message, "oldest_fist": True}
+
+            async for message in ctx.channel.history(**kwargs):
+                if message.author == medium:
+                    medium = message
+                    break
 
         for emote in self.bonk_emotes:
             await message.add_reaction(emote)
