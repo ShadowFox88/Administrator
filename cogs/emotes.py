@@ -83,7 +83,7 @@ class Emotes(custom.Cog):
                    ctx,
                    medium: Optional[Medium] = None):
         joined = ("").join(self.bonk_emotes)
-        kwargs = {"before": ctx.message, "oldest_first": True}
+        kwargs = {"before": ctx.message}
 
         if not medium:
             async for message in ctx.channel.history(**kwargs):
