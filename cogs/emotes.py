@@ -54,9 +54,11 @@ class Emotes(custom.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        uncached = not self._cached_event.is_set()
+        not_owner = not await self.bot.is_owner(message.author)
         ctx = await self.bot.get_context(message)
 
-        if not self._cached_event.is_set() or message.author.bot or ctx.valid:
+        if message.author.bot or uncached or not_owner or ctx.valid:
             return
         generated = wrapping = ""
         matches = self.pattern.findall(message.content)
