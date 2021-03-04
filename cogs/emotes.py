@@ -11,14 +11,14 @@ from base import custom
 Medium = Union[discord.Message, discord.Member]
 
 
-class Emotes(custom.Cog):
+class Emotes(custom.Cog, hidden=True):
     def __init__(self, bot):
         self.bot = bot
 
         self._cached = set()
         self._cached_event = asyncio.Event()
         self.emotes = {}
-        self.pattern = re.compile(r";(?P<escaped>\\)?(?P<name>[a-zA-Z0-9_]+)")
+        self.pattern = re.compile(r"\$(?P<escaped>\\)?(?P<name>[a-zA-Z0-9_]+)")
         self.bonk_emotes: Tuple = None
 
         self.bot.loop.create_task(self.__ainit__())
@@ -55,10 +55,9 @@ class Emotes(custom.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         uncached = not self._cached_event.is_set()
-        not_owner = not await self.bot.is_owner(message.author)
         ctx = await self.bot.get_context(message)
 
-        if message.author.bot or uncached or not_owner or ctx.valid:
+        if message.author.bot or uncached or ctx.valid:
             return
         generated = wrapping = ""
         matches = self.pattern.findall(message.content)
