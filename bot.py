@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 
 from base import custom
 
@@ -7,7 +6,6 @@ from base import custom
 class Administrator(custom.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(
-            command_prefix=commands.when_mentioned_or(">>>"),
             activity=discord.Activity(
                 type=discord.ActivityType.listening,
                 name=">>>help and pings"
