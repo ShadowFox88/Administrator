@@ -139,5 +139,6 @@ cython_debug/
 
 # Custom
 .flake8
+config.toml
 TOKEN
 test.py
