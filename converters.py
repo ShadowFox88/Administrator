@@ -2,24 +2,12 @@ import operator
 
 from discord.ext import commands
 
-import enums
 from objects import Operation
 
 
 class Lowered(commands.Converter):
     async def convert(self, ctx, argument):
-        try:
-            return argument.lower()
-        except Exception:
-            raise commands.BadArgument("WIP")
-
-
-class TriggerConverter(commands.Converter):
-    async def convert(self, ctx, argument):
-        try:
-            return enums.Trigger[argument.upper()]
-        except Exception:
-            raise commands.BadArgument("WIP")
+        return argument.lower()
 
 
 class OperationConverter(commands.Converter):
@@ -43,10 +31,10 @@ class Difficulty(commands.Converter):
     MIN = 0
     MAX = 20
 
-    async def convert(self, ctx, argument) -> int:
+    async def convert(self, ctx, argument):
         try:
             argument = int(argument)
-        except Exception:
+        except (ValueError, TypeError):
             raise commands.BadArgument(f'cannot convert "{argument}" to int')
         else:
             if argument < self.MIN:
@@ -57,5 +45,6 @@ class Difficulty(commands.Converter):
                 value = self.MAX
             else:
                 return argument
-            raise commands.BadArgument(f"{argument} is {comparative} than "
-                                       f"{value}")
+            raise commands.BadArgument(
+                f"{argument} is {comparative} than {value}"
+            )
