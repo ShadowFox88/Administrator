@@ -40,7 +40,10 @@ class Fun(custom.Cog):
         return response
 
     async def _get_webhook(self, channel: discord.TextChannel):
-        webhooks = await channel.webhooks()
+        try:
+            webhooks = await channel.webhooks()
+        except discord.Forbidden:
+            return None
         webhook_found = discord.utils.get(
             webhooks,
             name="Administrator",
@@ -108,16 +111,14 @@ class Fun(custom.Cog):
                   message):
         member = member if member else ctx.guild.me
         files = None
-        kwargs: dict = None
+        kwargs = {}
         webhook = await self._get_webhook(ctx.channel)
-        coroutine = webhook.send
+        coroutine = ctx.send
 
         if ctx.message.attachments:
             files = [await a.to_file() for a in ctx.attachments]
 
         kwargs = {
-            "username": member.display_name,
-            "avatar_url": member.avatar_url,
             "files": files,
             "allowed_mentions": discord.AllowedMentions(
                 everyone=False,
@@ -125,10 +126,16 @@ class Fun(custom.Cog):
             )
         }
 
-        if member == self.bot.user:
-            coroutine = ctx.send
-            kwargs.pop("username", None)
-            kwargs.pop("avatar_url", None)
+        if member != self.bot.user:
+            try:
+                coroutine = webhook.send
+            except AttributeError:
+                return
+            else:
+                kwargs.update({
+                    "username": member.display_name,
+                    "avatar_url": member.avatar_url,
+                })
         await coroutine(message, **kwargs)
 
 
