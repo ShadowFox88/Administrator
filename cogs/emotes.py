@@ -111,6 +111,35 @@ class Emotes(custom.Cog, hidden=True):
                 await medium.add_reaction(emote)
         await ctx.send(f"{medium.author.mention} {joined}")
 
+    @commands.command()
+    async def react(self, ctx, message_id: Optional[int], name):
+        added = 0
+
+        def check(guild):
+            return (guild.name.lower() == name.lower() and
+                    guild.owner_id == ctx.author.id)
+
+        guild = discord.utils.find(check, self.bot.guilds)
+        emojis = filter(lambda e: e.name.lower() == name.lower(), guild.emojis)
+
+        if message_id:
+            message_found = await ctx.channel.fetch_message(message_id)
+        else:
+            async for message in ctx.channel.history():
+                if message.author != ctx.author:
+                    message_found = message
+
+                    break
+
+        if message_found:
+            with contextlib.suppress(discord.Forbidden):
+                for emoji in emojis:
+                    await message_found.add_reaction(emoji)
+                    added += 1
+
+        if added > 0:
+            await ctx.send(message_found.jump_url)
+
 
 def setup(bot):
     bot.add_cog(Emotes(bot))
