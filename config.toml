@@ -1,2 +1,6 @@
 [bot]
-prefix = ">>>"
+prefix = "t."
+
+[database]
+user = "postgres"
+password = "root"

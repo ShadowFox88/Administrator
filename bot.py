@@ -1,5 +1,6 @@
 import discord
 
+import database
 from base import custom
 
 
@@ -19,7 +20,9 @@ class Administrator(custom.Bot):
             autocomplete=True
         )
 
-        self.load_base_extensions(exclude=["error_handler.py"])
+        self.db = database.create(bot=self, config=self.config)
+
+        self.load_base_extensions()
         self.load_extensions("cogs")
 
 
