@@ -4,28 +4,27 @@ import discord
 from discord.ext import commands
 
 from base import custom
-from converters import Lowered, TriggerConverter
-from enums import Trigger
+from converters import Lowered
+from objects import Trigger
 
 
 class Core(custom.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.features = {
-            "genshin impact": self.genshin_impact_coro
+        self.roles = {
+            "community": 761425977401933845,
+            "genshin": 763866942074912779,
+            "minecraft": 782302123164565556
         }
-        self.features["genshin"] = self.features["genshin impact"]
+        self.roles["genshin impact"] = self.roles["genshin"]
 
         self.bot.loop.create_task(self.__ainit__())
 
-    @property
-    def community(self):
-        return self.bot.home.get_role(761425977401933845)
+    def get_role(self, name: str):
+        _id = self.roles.get(name, -1)
 
-    @property
-    def genshin_impact(self):
-        return self.bot.home.get_role(763866942074912779)
+        return self.bot.home.get_role(_id)
 
     async def __ainit__(self):
         await self.bot.wait_until_ready()
@@ -45,13 +44,16 @@ class Core(custom.Cog):
         if 0 not in (assigned, total):
             print(f"Assigned community role to {assigned}/{total} members")
 
-    async def genshin_impact_coro(self, ctx, trigger: Trigger):
+    async def _process_trigger(self,
+                               member: discord.Member,
+                               trigger: Trigger,
+                               role: discord.Role):
         if trigger is Trigger.IN:
-            if self.genshin_impact not in ctx.author.roles:
-                await ctx.author.add_roles(self.genshin_impact)
+            if role not in member.roles:
+                await member.add_roles(role)
         else:
-            if self.genshin_impact in ctx.author.roles:
-                await ctx.author.remove_roles(self.genshin_impact)
+            if role in member.roles:
+                await member.remove_roles(role)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -59,13 +61,14 @@ class Core(custom.Cog):
             await member.add_roles(self.community)
 
     @commands.command()
-    async def opt(self, ctx, trigger: TriggerConverter, *, feature: Lowered):
-        feature_found = self.features.get(feature, None)
+    async def opt(self, ctx, trigger: Trigger, *, feature: Lowered):
+        feature_found = self.roles.get(feature)
         message = f'No feature called "{feature}"'
 
         if feature_found:
             message = f"Opted {trigger.name.lower()}: **{feature.title()}**"
-            await feature_found(ctx, trigger)
+
+            await self._process_trigger(ctx.author, trigger, feature_found)
         await ctx.send(message)
 
 
